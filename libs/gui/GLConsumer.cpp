@@ -175,8 +175,8 @@ GLConsumer::~GLConsumer() {
     if (mBlitEngine) {
         copybit_close(mBlitEngine);
     }
-#endif
 }
+#endif
 
 status_t GLConsumer::setDefaultBufferSize(uint32_t w, uint32_t h)
 {
