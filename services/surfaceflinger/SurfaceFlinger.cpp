@@ -739,7 +739,9 @@ status_t SurfaceFlinger::getDisplayInfo(const sp<IBinder>& display, DisplayInfo*
         info->orientation = 0;
     }
 
-    int additionalRot = mDisplays[0]->getHardwareOrientation() / 90;
+    char value[PROPERTY_VALUE_MAX];
+    property_get("ro.sf.hwrotation", value, "0");
+    int additionalRot = atoi(value) / 90;
     if ((type == DisplayDevice::DISPLAY_PRIMARY) && (additionalRot & DisplayState::eOrientationSwapMask)) {
         info->h = hwc.getWidth(type);
         info->w = hwc.getHeight(type);
@@ -1891,12 +1893,8 @@ void SurfaceFlinger::doComposeSurfaces(const sp<const DisplayDevice>& hw, const 
 
             // screen is already cleared here
             if (!region.isEmpty()) {
-                if (cur != end) {
-                    if (cur->getCompositionType() != HWC_BLIT)
-                        // can happen with SurfaceView
-                        drawWormhole(hw, region);
-                } else
-                    drawWormhole(hw, region);
+                // can happen with SurfaceView
+                drawWormhole(hw, region);
             }
         }
 
@@ -2938,6 +2936,7 @@ class GraphicProducerWrapper : public BBinder, public MessageHandler {
     uint32_t code;
     Parcel const* data;
     Parcel* reply;
+    Mutex mLock;
 
     enum {
         MSG_API_CALL,
@@ -2950,6 +2949,7 @@ class GraphicProducerWrapper : public BBinder, public MessageHandler {
      */
     virtual status_t transact(uint32_t code,
             const Parcel& data, Parcel* reply, uint32_t flags) {
+        mLock.lock();
         this->code = code;
         this->data = &data;
         this->reply = reply;
@@ -2962,6 +2962,7 @@ class GraphicProducerWrapper : public BBinder, public MessageHandler {
             looper->sendMessage(this, Message(MSG_API_CALL));
             barrier.wait();
         }
+        mLock.unlock();
         return NO_ERROR;
     }
 
@@ -3058,7 +3059,7 @@ status_t SurfaceFlinger::captureScreen(const sp<IBinder>& display,
                 result = flinger->captureScreenImplLocked(hw,
                         producer, reqWidth, reqHeight, minLayerZ, maxLayerZ,
                         useReadPixels);
-#ifdef USE_MHEAP_SCREENSHOT
+#ifdef USE_MHEAP_SCREENSHOT || 
             } else {
                 // Should never get here
                 return BAD_VALUE;

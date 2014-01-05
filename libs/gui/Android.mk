@@ -37,7 +37,16 @@ LOCAL_SHARED_LIBRARIES := \
 	libsync \
 	libui \
 	libutils \
+	libhardware \
 	liblog
+
+ifdef STE_HARDWARE
+LOCAL_SHARED_LIBRARIES += \
+       libhardware \
+       libhardware_legacy
+endif
+
+
 
 # Executed only on QCOM BSPs
 ifeq ($(TARGET_USES_QCOM_BSP),true)

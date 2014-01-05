@@ -34,6 +34,10 @@ public:
     virtual ~MemoryBase();
     virtual sp<IMemoryHeap> getMemory(ssize_t* offset, size_t* size) const;
 
+#ifdef STE_HARDWARE
+    virtual sp<IMemoryHeap> getMemory(long* offset, unsigned int* size) const;
+#endif
+
 protected:
     size_t getSize() const { return mSize; }
     ssize_t getOffset() const { return mOffset; }
